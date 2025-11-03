@@ -1,0 +1,58 @@
+services:
+  whisper-transcription:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: whisper-transcription-service
+    image: whisper-transcription:latest
+
+    # Enable GPU support (requires nvidia-docker)
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+    # Port mapping - expose on localhost only for security
+    ports:
+      - "127.0.0.1:58231:58231"
+
+    # Persistent volume for model cache
+    volumes:
+      - whisper-models:/models
+      - ./logs:/app/logs
+
+    # Environment variables
+    environment:
+      - MODEL_CACHE_DIR=/models
+      - CUDA_VISIBLE_DEVICES=0
+      - TRANSFORMERS_CACHE=/models
+      - HF_HOME=/models
+
+    # Restart policy for auto-start on boot
+    restart: unless-stopped
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:58231/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    # Set shared memory size for better performance
+    shm_size: '2gb'
+
+# Named volumes for persistence
+volumes:
+  whisper-models:
+    driver: local
