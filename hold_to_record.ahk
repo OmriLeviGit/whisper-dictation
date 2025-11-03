@@ -165,8 +165,7 @@ StopRecording() {
         try {
             RunWait(transcribeCmd, , "Hide")
             LogDebug("Transcription completed")
-            ToolTip("Transcription complete!", , , 1)
-            SetTimer () => ToolTip("", , , 1), -1000  ; Hide after 1 second
+            ToolTip("", , , 1)  ; Hide tooltip
         } catch Error as err {
             LogDebug("ERROR during transcription: " err.Message)
             ToolTip("Transcription error - check logs", , , 1)

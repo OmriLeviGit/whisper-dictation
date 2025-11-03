@@ -18,8 +18,8 @@ logger = logging.getLogger(__name__)
 keyboard = Controller()
 
 # Typing configuration
-TYPING_DELAY = 0.01  # Delay between characters (seconds)
-INITIAL_DELAY = 0.2  # Initial delay before starting to type (seconds)
+TYPING_DELAY = 0.03  # Delay between characters (seconds) - slower for apps like Notepad
+INITIAL_DELAY = 0.3  # Initial delay before starting to type (seconds)
 
 
 def type_text(text: str, delay: float = TYPING_DELAY) -> None:
