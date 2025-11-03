@@ -16,6 +16,8 @@ global outputFile := ""
 global stopFlagFile := ""
 global tempDir := A_Temp "\whisper_dictation"
 global scriptDir := A_ScriptDir
+global projectRoot := scriptDir "\..\"  ; Project root is parent of scripts/
+global srcDir := projectRoot "src"
 
 ; Create temp directory if it doesn't exist
 if !DirExist(tempDir) {
@@ -74,7 +76,7 @@ CleanupStaleFlags()
         SoundBeep(600, 100)  ; Beep to indicate start
 
         ; Build Python command
-        recorderScript := scriptDir "\recorder.py"
+        recorderScript := srcDir "\recorder.py"
         pythonCmd := PYTHON_CMD ' "' recorderScript '" "' outputFile '"'
 
         ; Add device parameter if specified
@@ -157,7 +159,7 @@ StopRecording() {
         ToolTip("Transcribing...", , , 1)
 
         ; Build command to transcribe and type
-        transcribeScript := scriptDir "\transcribe_and_type.py"
+        transcribeScript := srcDir "\transcribe_and_type.py"
         transcribeCmd := PYTHON_CMD ' "' transcribeScript '" "' outputFile '"'
         LogDebug("Transcribe command: " transcribeCmd)
 

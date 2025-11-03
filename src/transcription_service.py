@@ -30,11 +30,11 @@ app = FastAPI(
 # Global model instance (loaded on startup)
 model: Optional[WhisperModel] = None
 
-# Model configuration
-MODEL_SIZE = "large-v3"
-DEVICE = "cuda"
-COMPUTE_TYPE = "float16"
-MODEL_CACHE_DIR = "/models"
+# Model configuration (can be overridden via environment variables)
+MODEL_SIZE = os.getenv("WHISPER_MODEL", "large-v3")
+DEVICE = os.getenv("WHISPER_DEVICE", "cuda")
+COMPUTE_TYPE = os.getenv("WHISPER_COMPUTE_TYPE", "float16")
+MODEL_CACHE_DIR = os.getenv("MODEL_CACHE_DIR", "/models")
 
 
 @app.on_event("startup")
@@ -104,6 +104,7 @@ async def _do_transcription(file: UploadFile):
         # Transcribe audio
         segments, info = model.transcribe(
             temp_path,
+            task="transcribe",  # Transcribe only, no translation
             beam_size=5,
             best_of=5,
             temperature=0.0,
@@ -171,4 +172,5 @@ async def transcribe_simple(file: UploadFile = File(...)):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=58432)
+    port = int(os.getenv("WHISPER_PORT", "58432"))
+    uvicorn.run(app, host="0.0.0.0", port=port)

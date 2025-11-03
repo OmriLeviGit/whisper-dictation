@@ -9,6 +9,12 @@ from pathlib import Path
 from typing import Optional
 
 import requests
+from config import (
+    WHISPER_SERVICE_URL,
+    WHISPER_TIMEOUT,
+    WHISPER_MAX_RETRIES,
+    WHISPER_RETRY_DELAY
+)
 
 # Configure logging
 logging.basicConfig(
@@ -17,11 +23,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Service configuration
-WHISPER_SERVICE_URL = "http://localhost:58432"
-TIMEOUT_SECONDS = 300  # 5 minutes max for transcription
-MAX_RETRIES = 3
-RETRY_DELAY = 2
+# Service configuration (from config file)
+TIMEOUT_SECONDS = WHISPER_TIMEOUT
+MAX_RETRIES = WHISPER_MAX_RETRIES
+RETRY_DELAY = WHISPER_RETRY_DELAY
 
 
 class TranscriptionError(Exception):

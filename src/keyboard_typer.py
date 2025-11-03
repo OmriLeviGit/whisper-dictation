@@ -6,6 +6,7 @@ Simulates keyboard input to type transcribed text at the current cursor position
 import logging
 import time
 from pynput.keyboard import Controller, Key
+from config import TYPING_CHAR_DELAY, TYPING_INITIAL_DELAY
 
 # Configure logging
 logging.basicConfig(
@@ -17,9 +18,9 @@ logger = logging.getLogger(__name__)
 # Initialize keyboard controller
 keyboard = Controller()
 
-# Typing configuration
-TYPING_DELAY = 0.03  # Delay between characters (seconds) - slower for apps like Notepad
-INITIAL_DELAY = 0.3  # Initial delay before starting to type (seconds)
+# Typing configuration (from config file)
+TYPING_DELAY = TYPING_CHAR_DELAY
+INITIAL_DELAY = TYPING_INITIAL_DELAY
 
 
 def type_text(text: str, delay: float = TYPING_DELAY) -> None:

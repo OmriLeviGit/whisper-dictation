@@ -32,14 +32,22 @@ RUN python3.11 -m pip install --no-cache-dir \
 # Create working directory
 WORKDIR /app
 
-# Copy service code
-COPY transcription_service.py /app/
+# Copy service code from src directory
+COPY src/transcription_service.py /app/
 
 # Create model cache directory
 RUN mkdir -p /models
 
-# Expose API port
-EXPOSE 58432
+# Expose API port (configurable via environment)
+ARG WHISPER_PORT=58432
+EXPOSE ${WHISPER_PORT}
+
+# Environment variables (can be overridden in docker-compose)
+ENV WHISPER_PORT=${WHISPER_PORT}
+ENV WHISPER_MODEL=large-v3
+ENV WHISPER_DEVICE=cuda
+ENV WHISPER_COMPUTE_TYPE=float16
+ENV MODEL_CACHE_DIR=/models
 
 # Run the service
-CMD ["uvicorn", "transcription_service:app", "--host", "0.0.0.0", "--port", "58432"]
+CMD uvicorn transcription_service:app --host 0.0.0.0 --port ${WHISPER_PORT}

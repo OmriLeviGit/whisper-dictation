@@ -9,6 +9,7 @@ import os
 import signal
 import atexit
 from datetime import datetime
+from config import SAMPLE_RATE, CHANNELS
 
 # Set up logging
 LOG_FILE = os.path.join(os.environ.get('TEMP', '.'), 'whisper_dictation', 'recorder.log')
@@ -38,7 +39,7 @@ def list_devices():
 # Global variables for signal handling
 recording_data = []
 output_path = None
-sample_rate = 16000
+sample_rate = SAMPLE_RATE
 
 def save_recording():
     """Save the recording to file - called on exit"""
@@ -72,7 +73,7 @@ def signal_handler(signum, frame):
     save_recording()
     sys.exit(0)
 
-def record_audio(output_file, device=None, samplerate=16000, channels=1):
+def record_audio(output_file, device=None, samplerate=SAMPLE_RATE, channels=CHANNELS):
     """
     Record audio until stop flag file is detected or process is killed
 
