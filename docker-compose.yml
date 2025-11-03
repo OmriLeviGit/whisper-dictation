@@ -1,0 +1,30 @@
+services:
+  whisper:
+    build: .
+    container_name: whisper-service
+    ports:
+      - "127.0.0.1:58432:58432"
+    volumes:
+      - whisper-models:/models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:58432/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    shm_size: '2gb'
+
+volumes:
+  whisper-models:
+    driver: local

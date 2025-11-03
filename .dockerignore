@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# Project files
+old_files/
+*.wav
+*.mp3
+recordings/
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# AutoHotkey
+*.ahk
+*.bat
+
+# Documentation
+*.md
+!README.md
+
+# Other Python files (only need transcription_service.py in Docker)
+recorder.py
+transcribe_client.py
+keyboard_typer.py
+transcribe_and_type.py
+check_recordings.py
+view_log.py

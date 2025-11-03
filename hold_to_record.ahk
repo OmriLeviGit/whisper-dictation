@@ -105,7 +105,7 @@ CleanupStaleFlags()
 }
 
 StopRecording() {
-    global isRecording, recordingProcess, outputFile, stopFlagFile
+    global isRecording, recordingProcess, outputFile, stopFlagFile, scriptDir, PYTHON_CMD
 
     if (isRecording) {
         LogDebug("Stopping recording, PID: " recordingProcess)
@@ -133,12 +133,45 @@ StopRecording() {
         isRecording := false
         LogDebug("Recording stopped, file should be at: " outputFile)
 
-        ; Show notification
-        ToolTip("Recording saved to:`n" outputFile, , , 1)
-        SetTimer () => ToolTip("", , , 1), -3000  ; Hide after 3 seconds
-
         ; Play a sound to indicate recording stopped
         SoundBeep(800, 100)
+
+        ; Wait for file to be written (check for existence with timeout)
+        maxWaitMs := 3000
+        waitedMs := 0
+        while (!FileExist(outputFile) && waitedMs < maxWaitMs) {
+            Sleep(100)
+            waitedMs += 100
+        }
+
+        if (!FileExist(outputFile)) {
+            LogDebug("ERROR: Recording file was not created")
+            ToolTip("Error: Recording file not created", , , 1)
+            SetTimer () => ToolTip("", , , 1), -3000
+            return
+        }
+
+        LogDebug("Recording file exists, starting transcription...")
+
+        ; Show transcription progress tooltip
+        ToolTip("Transcribing...", , , 1)
+
+        ; Build command to transcribe and type
+        transcribeScript := scriptDir "\transcribe_and_type.py"
+        transcribeCmd := PYTHON_CMD ' "' transcribeScript '" "' outputFile '"'
+        LogDebug("Transcribe command: " transcribeCmd)
+
+        ; Run transcription (synchronously, wait for completion)
+        try {
+            RunWait(transcribeCmd, , "Hide")
+            LogDebug("Transcription completed")
+            ToolTip("Transcription complete!", , , 1)
+            SetTimer () => ToolTip("", , , 1), -1000  ; Hide after 1 second
+        } catch Error as err {
+            LogDebug("ERROR during transcription: " err.Message)
+            ToolTip("Transcription error - check logs", , , 1)
+            SetTimer () => ToolTip("", , , 1), -3000
+        }
     }
 }
 

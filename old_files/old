@@ -1,8 +1,0 @@
-#Requires AutoHotkey v2.0
-#SingleInstance Force
-
-; Simple test - just type "HELLO" when you press Win+F1
-#F1:: {
-    MsgBox("Win+F1 was pressed! Now I'll type HELLO")
-    SendText("HELLO FROM AUTOHOTKEY")
-}
