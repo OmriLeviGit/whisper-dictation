@@ -1,8 +1,8 @@
 # Whisper Dictation
 
-GPU-accelerated speech-to-text dictation using OpenAI Whisper. Hold a hotkey to record, release to transcribe and auto-type the result.
+GPU-accelerated speech-to-text dictation for Windows using OpenAI Whisper. Hold a hotkey to record, release to transcribe and auto-type the result. All processing happens locally.
 
-**How it works:** Hold Win+F1 → Speak → Release → Text appears at your cursor (~2-5 seconds)
+**How it works:** Hold the hotkey (default: Win+F1) while speaking, release when done - text appears at cursor
 
 ## Requirements
 
@@ -18,13 +18,15 @@ GPU-accelerated speech-to-text dictation using OpenAI Whisper. Hold a hotkey to 
    ```bash
    start.bat
    ```
-   First run automatically installs dependencies and builds the Docker image.
+   First run automatically installs dependencies and builds the Docker image. If Docker isn't ready, it will retry up to 3 times (waiting 60 seconds between retries).
 
 2. **Test it**: Hold **Win+F1**, speak, then release
 
 3. **Stop**: `stop.bat`
 
-### Optional: Auto-start on login
+> **Note:** First use takes longer as the Whisper model loads into memory. Subsequent transcriptions will be much faster (depending on model type and hardware).
+
+### Optional: Auto-start on Windows startup
 
 1. Press **Win+R** → `shell:startup` → Enter
 2. Create a shortcut to `start.bat`
@@ -32,29 +34,55 @@ GPU-accelerated speech-to-text dictation using OpenAI Whisper. Hold a hotkey to 
 
 ## Configuration
 
-The defaults work well for most users. Edit configuration files in the `config/` directory as needed.
-
-### Common Settings
+The defaults work well for most users. Edit files in `config/` directory as needed.
 
 **`config/client.env`** - Hotkey and typing behavior:
-- **`HOTKEY=Win+F1`** - Customize your recording hotkey
-  - Examples: `Alt+R`, `Ctrl+Shift+Space`, `Win+Shift+F1`
-- **`TYPING_CHAR_DELAY=0.03`** - Increase if text gets cut off in some apps
-- **`AUDIO_DEVICE=`** - Empty uses default mic (see Troubleshooting to list devices)
-- **`TEMP_DIR=`** - Recording save location (default: `%TEMP%\whisper_dictation\`)
+```env
+HOTKEY=Win+F1                    # Examples: Alt+R, Ctrl+Shift+Space, Win+Shift+F1
+TYPING_CHAR_DELAY=0.03           # Increase to 0.05 if text gets cut off in some apps
+AUDIO_DEVICE=                    # Empty = default mic (see Troubleshooting to list devices)
+TEMP_DIR=                        # Recording location (default: %TEMP%\whisper_dictation\)
+```
 
-**`config/service.env`** - Whisper model and performance:
-- **`WHISPER_MODEL=large-v3-turbo`** - Balance speed vs accuracy
-  - Fast: `tiny`, `base`, `small`
-  - Balanced: `medium`, `large-v3-turbo` ⭐ (default)
-  - Most Accurate: `large-v3`
-- **`WHISPER_DEVICE=cuda`** - Use `cpu` if no NVIDIA GPU
-- **`WHISPER_COMPUTE_TYPE=float16`** - Use `int8` for CPU mode
+**`config/service.env`** - Whisper model and performance (smaller is faster):
+```env
+WHISPER_MODEL=large-v3-turbo     # Options: tiny, base, small, medium, large-v3, large-v3-turbo
+WHISPER_DEVICE=cuda              # cuda (GPU) or cpu
+WHISPER_COMPUTE_TYPE=float16     # float16 (GPU) or int8 (CPU)
+```
 
-### Apply Changes
+**Apply changes:**
+- After editing `client.env`: `restart.bat`
+- After editing `service.env`: `start.bat`
 
-- After editing **client.env** (hotkey/typing): `restart.bat`
-- After editing **service.env** (model/GPU): `start.bat`
+## Project Structure
+
+```
+whisper-dictation/
+├── config/                      # Configuration files
+│   ├── client.env               # Hotkey and typing behavior settings
+│   └── service.env              # Whisper model and performance settings
+├── docker/                      # Docker setup
+│   ├── Dockerfile               # Container image definition
+│   └── docker-compose.yml       # Service orchestration
+├── scripts/                     # AutoHotkey scripts
+│   └── hold_to_record.ahk       # Hotkey handler for recording
+├── src/                         # Python source code
+│   ├── config.py                # Configuration loader
+│   ├── keyboard_typer.py        # Types transcribed text
+│   ├── recorder.py              # Audio recording module
+│   ├── transcribe_client.py     # API client for transcription
+│   ├── transcribe_and_type.py   # Main client orchestrator
+│   └── transcription_service.py # Whisper API service
+├── utils/                       # Utility scripts
+│   ├── check_recordings.py      # Debug recording files
+│   └── view_log.py              # View application logs
+├── start.bat                    # Start all services
+├── stop.bat                     # Stop all services
+├── restart.bat                  # Restart AutoHotkey script
+├── pyproject.toml               # Python dependencies
+└── README.md                    # This file
+```
 
 ## Troubleshooting
 

@@ -1,15 +1,16 @@
 services:
-  whisper:
+  whisper-dictation:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    container_name: whisper-service
+    image: whisper-dictation:latest
+    container_name: whisper-dictation-service
     env_file:
       - ../config/service.env
     ports:
-      - "127.0.0.1:${WHISPER_PORT}:${WHISPER_PORT}"
+      - "${WHISPER_PORT}:${WHISPER_PORT}"
     volumes:
-      - whisper-models:/models
+      - whisper-dictation-models:/models
     deploy:
       resources:
         reservations:
@@ -30,5 +31,5 @@ services:
     shm_size: '2gb'
 
 volumes:
-  whisper-models:
+  whisper-dictation-models:
     driver: local

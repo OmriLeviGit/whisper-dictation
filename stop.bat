@@ -5,7 +5,7 @@ echo.
 
 REM Kill AutoHotkey process
 echo Stopping dictation hotkey...
-taskkill /F /IM AutoHotkey64.exe >NUL 2>&1
+taskkill /F /IM AutoHotkey64.exe >\\.\NUL 2>&1
 if %errorlevel% equ 0 (
     echo AutoHotkey stopped.
 ) else (
