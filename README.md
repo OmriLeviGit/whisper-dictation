@@ -14,17 +14,21 @@ GPU-accelerated speech-to-text dictation for Windows using OpenAI Whisper. Hold 
 
 ## Quick Start
 
-1. **Start everything**:
+1. **First-time setup**:
+   ```bash
+   setup.bat
+   ```
+   Installs dependencies, builds the Docker image, and starts the Whisper service.
+
+2. **Daily use**:
    ```bash
    start.bat
    ```
-   First run automatically installs dependencies and builds the Docker image. If Docker isn't ready, it will retry up to 3 times (waiting 60 seconds between retries).
+   Launches the dictation hotkey. Run this whenever you want to use dictation. Whisper should auto-start on system reboot with docker.
 
-2. **Test it**: Hold **Win+F1**, speak, then release
+3. **Test it**: Hold **Win+F1**, speak, then release
 
-3. **Stop**: `stop.bat`
-
-> **Note:** First use takes longer as the Whisper model loads into memory. Subsequent transcriptions will be much faster (depending on model type and hardware).
+> **Note:** First transcription takes longer as the Whisper model loads into memory. Subsequent transcriptions will be much faster (depending on model type and hardware).
 
 ### Optional: Auto-start on Windows startup
 
@@ -52,8 +56,8 @@ WHISPER_COMPUTE_TYPE=float16     # float16 (GPU) or int8 (CPU)
 ```
 
 **Apply changes:**
-- After editing `client.env`: `restart.bat`
-- After editing `service.env`: `start.bat`
+- After editing `client.env`: `start.bat` (restart the hotkey script)
+- After editing `service.env`: Rebuild the Docker container with `setup.bat`
 
 ## Project Structure
 
@@ -77,9 +81,9 @@ whisper-dictation/
 ├── utils/                       # Utility scripts
 │   ├── check_recordings.py      # Debug recording files
 │   └── view_log.py              # View application logs
-├── start.bat                    # Start all services
+├── setup.bat                    # First-time setup (run once)
+├── start.bat                    # Launch dictation hotkey
 ├── stop.bat                     # Stop all services
-├── restart.bat                  # Restart AutoHotkey script
 ├── pyproject.toml               # Python dependencies
 └── README.md                    # This file
 ```
@@ -96,13 +100,13 @@ whisper-dictation/
 
 **Text cut off or not typing:**
 - Increase `TYPING_CHAR_DELAY` in `config/client.env` to `0.05` or higher
-- Run `restart.bat`
+- Run `start.bat` to restart the hotkey script
 
 **Change audio device:**
 ```bash
 uv run python src/recorder.py --list-devices  # List devices
 # Edit config/client.env: Set AUDIO_DEVICE=<device_id>
-restart.bat
+start.bat  # Restart the hotkey script
 ```
 
 **Recordings location:** `%TEMP%\whisper_dictation\recording_*.wav`
@@ -113,7 +117,7 @@ restart.bat
 If you don't have an NVIDIA GPU:
 1. Edit `config/service.env`: Set `WHISPER_DEVICE=cpu` and `WHISPER_COMPUTE_TYPE=int8`
 2. Remove the GPU sections from `docker/docker-compose.yml` (the `deploy:` block)
-3. Run `start.bat`
+3. Run `setup.bat` to rebuild with CPU support
 
 ## Credits
 
