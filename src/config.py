@@ -1,40 +1,51 @@
 """
 Configuration loader for Whisper Dictation
 """
-import tomllib
+import os
 from pathlib import Path
+from dotenv import load_dotenv
 
-# Find project root (where config.toml is located)
+# Find project root (where config/ is located)
 PROJECT_ROOT = Path(__file__).parent.parent
-CONFIG_FILE = PROJECT_ROOT / "config.toml"
+CONFIG_DIR = PROJECT_ROOT / "config"
+CLIENT_ENV = CONFIG_DIR / "client.env"
+SERVICE_ENV = CONFIG_DIR / "service.env"
 
-# Load configuration
-def load_config():
-    """Load configuration from config.toml"""
-    with open(CONFIG_FILE, "rb") as f:
-        return tomllib.load(f)
+# Load environment variables from both config files
+# Service config loaded first, then client can override if needed
+load_dotenv(SERVICE_ENV)
+load_dotenv(CLIENT_ENV)
 
-# Global config object
-_config = load_config()
+# Helper function to get environment variables with defaults
+def get_env(key: str, default=None, cast=str):
+    """Get environment variable with optional type casting"""
+    value = os.getenv(key, default)
+    if value is None or value == "":
+        return default
+    if cast == int:
+        return int(value)
+    elif cast == float:
+        return float(value)
+    return value
 
 # Audio settings
-SAMPLE_RATE = _config["audio"]["sample_rate"]
-CHANNELS = _config["audio"]["channels"]
+SAMPLE_RATE = get_env("AUDIO_SAMPLE_RATE", 16000, int)
+CHANNELS = get_env("AUDIO_CHANNELS", 1, int)
 
 # Whisper settings
-WHISPER_PORT = _config["whisper"]["port"]
-WHISPER_MODEL = _config["whisper"]["model"]
-WHISPER_DEVICE = _config["whisper"]["device"]
-WHISPER_COMPUTE_TYPE = _config["whisper"]["compute_type"]
-WHISPER_TIMEOUT = _config["whisper"]["timeout"]
-WHISPER_MAX_RETRIES = _config["whisper"]["max_retries"]
-WHISPER_RETRY_DELAY = _config["whisper"]["retry_delay"]
+WHISPER_PORT = get_env("WHISPER_PORT", 58432, int)
+WHISPER_MODEL = get_env("WHISPER_MODEL", "large-v3")
+WHISPER_DEVICE = get_env("WHISPER_DEVICE", "cuda")
+WHISPER_COMPUTE_TYPE = get_env("WHISPER_COMPUTE_TYPE", "float16")
+WHISPER_TIMEOUT = get_env("WHISPER_TIMEOUT", 300, int)
+WHISPER_MAX_RETRIES = get_env("WHISPER_MAX_RETRIES", 3, int)
+WHISPER_RETRY_DELAY = get_env("WHISPER_RETRY_DELAY", 2, int)
 WHISPER_SERVICE_URL = f"http://localhost:{WHISPER_PORT}"
 
 # Typing settings
-TYPING_CHAR_DELAY = _config["typing"]["char_delay"]
-TYPING_INITIAL_DELAY = _config["typing"]["initial_delay"]
+TYPING_CHAR_DELAY = get_env("TYPING_CHAR_DELAY", 0.03, float)
+TYPING_INITIAL_DELAY = get_env("TYPING_INITIAL_DELAY", 0.3, float)
 
 # Paths
-TEMP_DIR = _config["paths"]["temp_dir"] or None
-MODEL_CACHE = _config["paths"]["model_cache"]
+TEMP_DIR = get_env("TEMP_DIR", None)
+MODEL_CACHE = get_env("MODEL_CACHE_DIR", "/models")

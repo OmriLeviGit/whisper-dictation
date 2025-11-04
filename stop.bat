@@ -5,7 +5,7 @@ echo.
 
 REM Kill AutoHotkey process
 echo Stopping dictation hotkey...
-taskkill /F /IM AutoHotkey64.exe >nul 2>&1
+taskkill /F /IM AutoHotkey64.exe >NUL 2>&1
 if %errorlevel% equ 0 (
     echo AutoHotkey stopped.
 ) else (
@@ -14,9 +14,7 @@ if %errorlevel% equ 0 (
 
 REM Stop Docker service
 echo Stopping Whisper service...
-cd docker
-docker-compose down
-cd ..
+docker-compose -f docker/docker-compose.yml --env-file config/service.env down
 
 echo.
 echo Whisper Dictation stopped.

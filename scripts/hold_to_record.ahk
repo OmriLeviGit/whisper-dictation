@@ -2,11 +2,8 @@
 #SingleInstance Force
 
 ; ==================== CONFIGURATION ====================
-; Python command - using uv to access installed dependencies
-global PYTHON_CMD := "uv run python"
-; Audio device ID (optional, leave empty for default microphone)
-; Run: uv run python recorder.py --list-devices to see available devices
-global AUDIO_DEVICE := ""
+; Configuration is now loaded from config/client.env
+; This section contains derived/computed values
 ; =======================================================
 
 ; Global variables
@@ -18,6 +15,14 @@ global tempDir := A_Temp "\whisper_dictation"
 global scriptDir := A_ScriptDir
 global projectRoot := scriptDir "\..\"  ; Project root is parent of scripts/
 global srcDir := projectRoot "src"
+global configDir := projectRoot "config"
+global clientConfigFile := configDir "\client.env"
+
+; Configuration variables (loaded from config file)
+global PYTHON_CMD := "uv run python"
+global AUDIO_DEVICE := ""
+global HOTKEY_CONFIG := "Win+F1"  ; Default fallback
+global HOTKEY_BASE_KEY := "F1"     ; Base key for KeyWait (extracted from hotkey)
 
 ; Create temp directory if it doesn't exist
 if !DirExist(tempDir) {
@@ -32,11 +37,98 @@ LogDebug(message) {
     FileAppend("[" timestamp "] " message "`n", logFile)
 }
 
+; Read configuration from client.env file
+LoadConfig() {
+    global clientConfigFile, AUDIO_DEVICE, HOTKEY_CONFIG
+
+    LogDebug("Loading config from: " clientConfigFile)
+
+    if !FileExist(clientConfigFile) {
+        LogDebug("WARNING: Config file not found, using defaults")
+        return
+    }
+
+    try {
+        configContent := FileRead(clientConfigFile)
+
+        ; Parse each line
+        Loop Parse, configContent, "`n", "`r" {
+            line := Trim(A_LoopField)
+
+            ; Skip empty lines and comments
+            if (line = "" || SubStr(line, 1, 1) = "#") {
+                continue
+            }
+
+            ; Parse KEY=VALUE
+            if InStr(line, "=") {
+                parts := StrSplit(line, "=", , 2)
+                key := Trim(parts[1])
+                value := Trim(parts[2])
+
+                ; Strip inline comments (everything after #)
+                if InStr(value, "#") {
+                    commentPos := InStr(value, "#")
+                    value := SubStr(value, 1, commentPos - 1)
+                    value := Trim(value)
+                }
+
+                ; Load relevant config values
+                if (key = "AUDIO_DEVICE") {
+                    AUDIO_DEVICE := value
+                    LogDebug("Loaded AUDIO_DEVICE: " value)
+                } else if (key = "HOTKEY") {
+                    HOTKEY_CONFIG := value
+                    LogDebug("Loaded HOTKEY: " value)
+                }
+            }
+        }
+    } catch Error as err {
+        LogDebug("ERROR loading config: " err.Message)
+    }
+}
+
+; Convert user-friendly hotkey format to AHK format
+; Examples: "Win+F1" -> {ahkFormat: "#F1", baseKey: "F1"}
+ConvertHotkeyFormat(userFormat) {
+    LogDebug("Converting hotkey: " userFormat)
+
+    ahkFormat := ""
+    baseKey := ""
+    parts := StrSplit(userFormat, "+")
+
+    ; Process each part
+    for index, part in parts {
+        part := Trim(part)
+
+        ; Convert modifiers
+        if (part = "Win") {
+            ahkFormat .= "#"
+        } else if (part = "Ctrl") {
+            ahkFormat .= "^"
+        } else if (part = "Alt") {
+            ahkFormat .= "!"
+        } else if (part = "Shift") {
+            ahkFormat .= "+"
+        } else {
+            ; This is the actual key (last part)
+            ahkFormat .= part
+            baseKey := part
+        }
+    }
+
+    LogDebug("Converted to: " ahkFormat " (base key: " baseKey ")")
+    return {ahkFormat: ahkFormat, baseKey: baseKey}
+}
+
 ; Log startup
-LogDebug("Script started! Waiting for Win+F1...")
+LogDebug("Script started!")
 LogDebug("Temp dir: " tempDir)
 LogDebug("Script dir: " scriptDir)
 LogDebug("Python CMD: " PYTHON_CMD)
+
+; Load configuration
+LoadConfig()
 
 ; Clean up any stale stop flag files from previous sessions
 CleanupStaleFlags() {
@@ -55,13 +147,12 @@ CleanupStaleFlags() {
 ; Run cleanup on startup
 CleanupStaleFlags()
 
-; Win+F1 - Hold to record
-#F1::
-{
+; Handler for hold-to-record hotkey
+HandleRecordingHotkey() {
     global isRecording, recordingProcess, outputFile, stopFlagFile, tempDir, scriptDir, PYTHON_CMD, AUDIO_DEVICE
 
     if (!isRecording) {
-        LogDebug("Win+F1 pressed - starting recording")
+        LogDebug("Recording hotkey pressed - starting recording")
         isRecording := true
 
         ; Generate unique filename with timestamp
@@ -72,7 +163,7 @@ CleanupStaleFlags()
         LogDebug("Stop flag file: " stopFlagFile)
 
         ; Show tooltip
-        ToolTip("Recording... (Hold Win+F1)")
+        ToolTip("Recording... (Hold hotkey)")
         SoundBeep(600, 100)  ; Beep to indicate start
 
         ; Build Python command
@@ -99,7 +190,7 @@ CleanupStaleFlags()
         }
 
         ; Wait for key release
-        KeyWait("F1")
+        KeyWait(HOTKEY_BASE_KEY)
 
         ; Stop recording
         StopRecording()
@@ -176,5 +267,21 @@ StopRecording() {
     }
 }
 
+; Register the hotkey dynamically
+hotkeyInfo := ConvertHotkeyFormat(HOTKEY_CONFIG)
+HOTKEY_BASE_KEY := hotkeyInfo.baseKey
+ahkHotkey := hotkeyInfo.ahkFormat
+
+LogDebug("Registering hotkey: " ahkHotkey " (base key: " HOTKEY_BASE_KEY ")")
+
+try {
+    Hotkey(ahkHotkey, (*) => HandleRecordingHotkey(), "On")
+    LogDebug("Hotkey registered successfully!")
+} catch Error as err {
+    LogDebug("ERROR: Failed to register hotkey: " err.Message)
+    MsgBox("Failed to register hotkey: " HOTKEY_CONFIG "`n`nError: " err.Message "`n`nPlease check your config/client.env file.")
+    ExitApp()
+}
+
 ; Show startup message
-TrayTip("Hold-to-Record Ready", "Press and hold Win+F1 to record audio")
+TrayTip("Hold-to-Record Ready", "Press and hold " HOTKEY_CONFIG " to record audio")
