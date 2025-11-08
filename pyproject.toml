@@ -1,8 +1,28 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "whisper-dictation"
 version = "0.1.0"
-description = "Hold-to-record audio transcription"
+description = "Hold-to-record audio transcription with GPU-accelerated Whisper"
+readme = "README.md"
 requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+    { name = "Omri" }
+]
+keywords = ["whisper", "transcription", "speech-to-text", "dictation", "voice-typing"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+]
 
 dependencies = [
     "sounddevice>=0.4.6",
@@ -12,3 +32,25 @@ dependencies = [
     "pynput>=1.7.6",
     "python-dotenv>=1.2.1",
 ]
+
+[project.optional-dependencies]
+service = [
+    "fastapi>=0.109.0",
+    "faster-whisper>=0.10.0",
+    "uvicorn>=0.27.0",
+]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+]
+
+[project.scripts]
+whisper-setup = "whisper_dictation.cli:setup"
+whisper-start = "whisper_dictation.cli:start"
+whisper-stop = "whisper_dictation.cli:stop"
+whisper-service = "whisper_dictation.cli:service"
+
+[tool.hatchling.build.targets.wheel]
+packages = ["src/whisper_dictation"]

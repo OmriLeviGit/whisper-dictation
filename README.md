@@ -18,29 +18,49 @@ GPU-accelerated speech-to-text dictation for Windows using OpenAI Whisper. Hold 
 - **NVIDIA GPU** (optional, can use CPU)
 - **[AutoHotkey v2.0](https://www.autohotkey.com/)**
 
+## Installation
+
+1. **Clone the repository**:
+   ```bash
+   git clone <your-repo-url>
+   cd whisper-dictation
+   ```
+
+2. **Install the package**:
+   ```bash
+   uv pip install -e .
+   ```
+   This installs the package in editable mode and creates CLI commands.
+
 ## Quick Start
 
 1. **First-time setup**:
    ```bash
-   setup.bat
+   whisper-setup
    ```
    Installs dependencies, builds the Docker image, and starts the Whisper service.
 
 2. **Daily use**:
    ```bash
-   start.bat
+   whisper-start
    ```
    Launches the dictation hotkey. Run this whenever you want to use dictation. Whisper should auto-start on system reboot with docker.
 
 3. **Test it**: Hold **Win+F1**, speak, then release
 
+4. **Stop services** (optional):
+   ```bash
+   whisper-stop
+   ```
+   Stops both the AutoHotkey script and Docker service.
+
 > **Note:** First transcription may take longer as the model loads into memory, with subsequent ones being faster. If still too slow, consider setting a smaller model in `config/service.env`.
 
 ### Optional: Auto-start on Windows startup
 
-1. Press **Win+R** → `shell:startup` → Enter
-2. Create a shortcut to `start.bat`
-3. Shortcut properties → Run: **Minimized**
+1. Create a shortcut that runs: `whisper-start`
+2. Press **Win+R** → `shell:startup` → Enter
+3. Place the shortcut in the startup folder
 
 ## Configuration
 
@@ -65,8 +85,8 @@ WHISPER_COMPUTE_TYPE=float16     # float16 (GPU) or int8 (CPU)
 ```
 
 **Apply changes:**
-- After editing `client.env`: `start.bat` (restart the hotkey script)
-- After editing `service.env`: Rebuild the Docker container with `setup.bat`
+- After editing `client.env`: `whisper-start` (restart the hotkey script)
+- After editing `service.env`: Rebuild the Docker container with `whisper-setup`
 
 ## Project Structure
 
@@ -80,21 +100,32 @@ whisper-dictation/
 │   └── docker-compose.yml       # Service orchestration
 ├── scripts/                     # AutoHotkey scripts
 │   └── hold_to_record.ahk       # Hotkey handler for recording
-├── src/                         # Python source code
-│   ├── load_config.py           # Configuration loader (reads from .env files)
-│   ├── record.py                # Audio recording module
-│   ├── transcribe_client.py     # API client for transcription service
-│   ├── transcribe.py            # Transcribe audio to text (used by AHK)
-│   └── whisper_service.py       # Whisper API service (runs in Docker)
+├── src/                         # Python package
+│   └── whisper_dictation/       # Main package
+│       ├── __init__.py          # Package initialization
+│       ├── cli.py               # Command-line interface
+│       ├── load_config.py       # Configuration loader
+│       ├── record.py            # Audio recording module
+│       ├── transcribe.py        # Transcription wrapper for AHK
+│       ├── transcribe_client.py # API client for transcription service
+│       └── whisper_service.py   # Whisper API service (runs in Docker)
 ├── utils/                       # Utility scripts
 │   ├── check_recordings.py      # Debug recording files
 │   └── view_log.py              # View application logs
-├── setup.bat                    # First-time setup (run once)
-├── start.bat                    # Launch dictation hotkey
-├── stop.bat                     # Stop all services
-├── pyproject.toml               # Python dependencies
+├── pyproject.toml               # Package configuration and dependencies
+├── MANIFEST.in                  # Package data files
+├── LICENSE                      # MIT License
 └── README.md                    # This file
 ```
+
+## CLI Commands
+
+After installation, the following commands are available:
+
+- `whisper-setup` - First-time setup (install deps, build Docker, start service)
+- `whisper-start` - Start the dictation hotkey
+- `whisper-stop` - Stop all services (AutoHotkey + Docker)
+- `whisper-service` - Manually run the Whisper service (for development)
 
 ## Troubleshooting
 
@@ -108,9 +139,9 @@ whisper-dictation/
 
 **Change audio device:**
 ```bash
-uv run python src/record.py --list-devices  # List devices
+uv run python -m whisper_dictation.record --list-devices  # List devices
 # Edit config/client.env: Set AUDIO_DEVICE=<device_id>
-start.bat  # Restart the hotkey script
+whisper-start  # Restart the hotkey script
 ```
 
 **Recordings location:**
@@ -123,7 +154,7 @@ start.bat  # Restart the hotkey script
 If you don't have an NVIDIA GPU:
 1. Edit `config/service.env`: Set `WHISPER_DEVICE=cpu` and `WHISPER_COMPUTE_TYPE=int8`
 2. Remove the GPU sections from `docker/docker-compose.yml` (the `deploy:` block)
-3. Run `setup.bat` to rebuild with CPU support
+3. Run `whisper-setup` to rebuild with CPU support
 
 ## Tools used
 

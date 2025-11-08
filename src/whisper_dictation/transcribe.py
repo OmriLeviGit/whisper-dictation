@@ -8,7 +8,11 @@ import sys
 import logging
 from pathlib import Path
 
-from transcribe_client import transcribe_audio, ServiceUnavailableError, TranscriptionError
+# Force UTF-8 encoding on stdout for non-English languages and special characters
+import io
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+
+from .transcribe_client import transcribe_audio, ServiceUnavailableError, TranscriptionError
 
 # Configure logging to file only (not to console, to keep stdout clean)
 log_dir = Path.home() / "AppData" / "Local" / "Temp" / "whisper_dictation"

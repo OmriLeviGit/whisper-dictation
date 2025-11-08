@@ -275,9 +275,8 @@ HandleRecordingHotkey() {
         ToolTip("Recording... (Hold hotkey)")
         SoundBeep(600, 100)  ; Beep to indicate start
 
-        ; Build Python command
-        recorderScript := srcDir "\record.py"
-        pythonCmd := PYTHON_CMD ' "' recorderScript '" "' outputFile '"'
+        ; Build Python command (use module syntax for package structure)
+        pythonCmd := PYTHON_CMD ' -m whisper_dictation.record "' outputFile '"'
 
         ; Add device parameter if specified
         if (AUDIO_DEVICE != "") {
@@ -394,9 +393,8 @@ StopRecording() {
         ; Show transcription progress tooltip
         ToolTip("Transcribing...", , , 1)
 
-        ; Build command to transcribe (get text without typing)
-        transcribeScript := srcDir "\transcribe.py"
-        transcribeCmd := PYTHON_CMD ' "' transcribeScript '" "' outputFile '"'
+        ; Build command to transcribe (get text without typing, use module syntax)
+        transcribeCmd := PYTHON_CMD ' -m whisper_dictation.transcribe "' outputFile '"'
         LogDebug("Transcribe command: " transcribeCmd)
 
         ; Run transcription and capture output
@@ -413,9 +411,9 @@ StopRecording() {
             shellCmd := A_ComSpec ' /c "' transcribeCmd ' > "' tempOutputFile '""'
             RunWait(shellCmd, , "Hide")
 
-            ; Read the transcribed text
+            ; Read the transcribed text (UTF-8 encoding for non-English languages)
             if FileExist(tempOutputFile) {
-                transcribedText := FileRead(tempOutputFile)
+                transcribedText := FileRead(tempOutputFile, "UTF-8")
                 FileDelete(tempOutputFile)  ; Clean up
 
                 LogDebug("Transcription received: '" transcribedText "'")

@@ -32,8 +32,13 @@ RUN python3.11 -m pip install --no-cache-dir \
 # Create working directory
 WORKDIR /app
 
-# Copy service code from src directory
-COPY src/whisper_service.py /app/
+# Copy the package files needed for installation
+COPY pyproject.toml /app/
+COPY README.md /app/
+COPY src/ /app/src/
+
+# Install the package
+RUN python3.11 -m pip install --no-cache-dir /app
 
 # Create model cache directory
 RUN mkdir -p /models
@@ -49,5 +54,5 @@ ENV WHISPER_DEVICE=cuda
 ENV WHISPER_COMPUTE_TYPE=float16
 ENV MODEL_CACHE_DIR=/models
 
-# Run the service
-CMD uvicorn whisper_service:app --host 0.0.0.0 --port ${WHISPER_PORT}
+# Run the service using the installed package
+CMD uvicorn whisper_dictation.whisper_service:app --host 0.0.0.0 --port ${WHISPER_PORT}

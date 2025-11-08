@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Optional
 
 import requests
-from load_config import (
+from .load_config import (
     WHISPER_SERVICE_URL,
     WHISPER_TIMEOUT,
     WHISPER_MAX_RETRIES,

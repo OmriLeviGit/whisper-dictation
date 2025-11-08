@@ -9,7 +9,7 @@ import os
 import signal
 import atexit
 from datetime import datetime
-from load_config import SAMPLE_RATE, CHANNELS
+from .load_config import SAMPLE_RATE, CHANNELS
 
 # Set up logging
 LOG_FILE = os.path.join(os.environ.get('TEMP', '.'), 'whisper_dictation', 'recorder.log')

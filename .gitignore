@@ -20,6 +20,10 @@ wheels/
 .installed.cfg
 *.egg
 
+# Package build artifacts
+src/**/__pycache__/
+src/**/*.pyc
+
 # Virtual environments
 venv/
 ENV/
@@ -28,7 +32,7 @@ env/
 
 # uv
 .uv/
-uv.lock
+# uv.lock should be tracked to ensure reproducible installs
 
 # Configuration files (may contain user-specific settings)
 .env
@@ -67,5 +71,7 @@ tmp/
 *.flac
 test_audio/
 
-# Windows reserved filenames
+# Windows reserved filenames (case-insensitive patterns)
+**/[Nn][Uu][Ll]
+**/NUL
 **/nul

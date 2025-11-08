@@ -1,0 +1,17 @@
+# Include documentation
+include README.md
+include LICENSE
+
+# Include configuration files
+recursive-include config *.env
+
+# Include AutoHotkey scripts
+recursive-include scripts *.ahk
+
+# Include Docker files
+recursive-include docker Dockerfile docker-compose.yml
+
+# Exclude unwanted files
+global-exclude __pycache__
+global-exclude *.py[co]
+global-exclude .DS_Store
