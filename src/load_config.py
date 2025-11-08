@@ -1,5 +1,7 @@
 """
-Configuration loader for Whisper Dictation
+Configuration Loader
+Loads configuration from .env files and exports as Python constants
+Used by record.py and transcribe_client.py
 """
 import os
 from pathlib import Path
@@ -32,20 +34,9 @@ def get_env(key: str, default=None, cast=str):
 SAMPLE_RATE = get_env("AUDIO_SAMPLE_RATE", 16000, int)
 CHANNELS = get_env("AUDIO_CHANNELS", 1, int)
 
-# Whisper settings
-WHISPER_PORT = get_env("WHISPER_PORT", 58432, int)
-WHISPER_MODEL = get_env("WHISPER_MODEL", "large-v3")
-WHISPER_DEVICE = get_env("WHISPER_DEVICE", "cuda")
-WHISPER_COMPUTE_TYPE = get_env("WHISPER_COMPUTE_TYPE", "float16")
+# Whisper client settings
+WHISPER_PORT = get_env("WHISPER_PORT", 8765, int)
 WHISPER_TIMEOUT = get_env("WHISPER_TIMEOUT", 300, int)
 WHISPER_MAX_RETRIES = get_env("WHISPER_MAX_RETRIES", 3, int)
 WHISPER_RETRY_DELAY = get_env("WHISPER_RETRY_DELAY", 2, int)
 WHISPER_SERVICE_URL = f"http://localhost:{WHISPER_PORT}"
-
-# Typing settings
-TYPING_CHAR_DELAY = get_env("TYPING_CHAR_DELAY", 0.03, float)
-TYPING_INITIAL_DELAY = get_env("TYPING_INITIAL_DELAY", 0.3, float)
-
-# Paths
-TEMP_DIR = get_env("TEMP_DIR", None)
-MODEL_CACHE = get_env("MODEL_CACHE_DIR", "/models")

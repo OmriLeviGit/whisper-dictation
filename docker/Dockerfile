@@ -33,7 +33,7 @@ RUN python3.11 -m pip install --no-cache-dir \
 WORKDIR /app
 
 # Copy service code from src directory
-COPY src/transcription_service.py /app/
+COPY src/whisper_service.py /app/
 
 # Create model cache directory
 RUN mkdir -p /models
@@ -50,4 +50,4 @@ ENV WHISPER_COMPUTE_TYPE=float16
 ENV MODEL_CACHE_DIR=/models
 
 # Run the service
-CMD uvicorn transcription_service:app --host 0.0.0.0 --port ${WHISPER_PORT}
+CMD uvicorn whisper_service:app --host 0.0.0.0 --port ${WHISPER_PORT}

@@ -9,7 +9,7 @@ import os
 import signal
 import atexit
 from datetime import datetime
-from config import SAMPLE_RATE, CHANNELS
+from load_config import SAMPLE_RATE, CHANNELS
 
 # Set up logging
 LOG_FILE = os.path.join(os.environ.get('TEMP', '.'), 'whisper_dictation', 'recorder.log')
@@ -171,11 +171,11 @@ def main():
     if len(sys.argv) < 2:
         log("No arguments provided")
         print("Usage:")
-        print("  python recorder.py <output_file.wav> [device_id]")
-        print("  python recorder.py --list-devices")
+        print("  python record.py <output_file.wav> [device_id]")
+        print("  python record.py --list-devices")
         print("\nExample:")
-        print("  python recorder.py recording.wav")
-        print("  python recorder.py recording.wav 1")
+        print("  python record.py recording.wav")
+        print("  python record.py recording.wav 1")
         sys.exit(1)
 
     if sys.argv[1] == "--list-devices":

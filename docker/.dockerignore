@@ -37,8 +37,8 @@ Thumbs.db
 *.md
 !README.md
 
-# Other Python files (only need transcription_service.py in Docker)
-recorder.py
+# Other Python files (only need whisper_service.py in Docker)
+record.py
 transcribe_client.py
 keyboard_typer.py
 transcribe_and_type.py

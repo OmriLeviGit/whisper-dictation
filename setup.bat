@@ -60,11 +60,10 @@ echo ========================================
 echo    Setup Complete!
 echo ========================================
 echo.
-echo Next steps:
-echo   1. Run 'start.bat' to activate the dictation hotkey
-echo   2. Check config/client.env to customize settings
-echo   3. Check config/service.env to change Whisper model
+echo Starting dictation hotkey...
+call "%~dp0start.bat"
 echo.
 echo The Docker container will auto-start on system reboot.
+echo To customize settings, check config/client.env and config/service.env
 echo.
 pause

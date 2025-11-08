@@ -4,6 +4,22 @@ GPU-accelerated speech-to-text dictation for Windows using OpenAI Whisper. Hold 
 
 **How it works:** Hold the hotkey (default: Win+F1) while speaking, release when done - text appears at cursor
 
+## Features
+
+### Context-Aware Typing
+When you release the recording hotkey, the system captures which window and cursor position you were in. When transcription completes:
+- **Same window:** Types the transcription directly at the cursor position (with best-effort caret restoration for simple apps like Notepad)
+- **Different window:** Adds the transcription to a queue instead of typing it
+
+### Transcription Queue (Win+V)
+If you switch windows while your transcription is processing, the text goes into a queue rather than being lost. Use **Win+V** to paste from the queue:
+- **FIFO queue:** First transcription in, first one pasted out
+- **Reusable last item:** The last item in the queue stays available (like the clipboard) - you can paste it multiple times
+- **Unlimited size:** Queue never gets full, all failed/queued transcriptions are preserved
+- **Invisible operation:** Empty queue does nothing silently, no error messages
+
+> **Note:** Win+V overrides Windows' default clipboard history hotkey. You can change this in `config/client.env`.
+
 ## Requirements
 
 - **Windows 10/11**
@@ -28,7 +44,7 @@ GPU-accelerated speech-to-text dictation for Windows using OpenAI Whisper. Hold 
 
 3. **Test it**: Hold **Win+F1**, speak, then release
 
-> **Note:** First transcription takes longer as the Whisper model loads into memory. Subsequent transcriptions will be much faster (depending on model type and hardware).
+> **Note:** First transcription may take longer as the model loads into memory, with subsequent ones being faster. If still too slow, consider setting a smaller model in `config/service.env`.
 
 ### Optional: Auto-start on Windows startup
 
@@ -40,15 +56,18 @@ GPU-accelerated speech-to-text dictation for Windows using OpenAI Whisper. Hold 
 
 The defaults work well for most users. Edit files in `config/` directory as needed.
 
-**`config/client.env`** - Hotkey and typing behavior:
+**`config/client.env`** - Hotkey and client behavior:
 ```env
 HOTKEY=Win+F1                    # Examples: Alt+R, Ctrl+Shift+Space, Win+Shift+F1
-TYPING_CHAR_DELAY=0.03           # Increase to 0.05 if text gets cut off in some apps
+PASTE_HOTKEY=Win+V               # Paste from transcription queue (overrides Windows clipboard history)
 AUDIO_DEVICE=                    # Empty = default mic (see Troubleshooting to list devices)
-TEMP_DIR=                        # Recording location (default: %TEMP%\whisper_dictation\)
+AUDIO_SAMPLE_RATE=16000          # Recommended for Whisper models
+WHISPER_TIMEOUT=300              # Timeout for transcription requests (seconds)
+WHISPER_MAX_RETRIES=3            # Number of retry attempts
+TEMP_DIR=                        # Recordings location (empty = %TEMP%\whisper_dictation)
 ```
 
-**`config/service.env`** - Whisper model and performance (smaller is faster):
+**`config/service.env`** - Whisper model and performance:
 ```env
 WHISPER_MODEL=large-v3-turbo     # Options: tiny, base, small, medium, large-v3, large-v3-turbo
 WHISPER_DEVICE=cuda              # cuda (GPU) or cpu
@@ -72,12 +91,11 @@ whisper-dictation/
 ├── scripts/                     # AutoHotkey scripts
 │   └── hold_to_record.ahk       # Hotkey handler for recording
 ├── src/                         # Python source code
-│   ├── config.py                # Configuration loader
-│   ├── keyboard_typer.py        # Types transcribed text
-│   ├── recorder.py              # Audio recording module
-│   ├── transcribe_client.py     # API client for transcription
-│   ├── transcribe_and_type.py   # Main client orchestrator
-│   └── transcription_service.py # Whisper API service
+│   ├── load_config.py           # Configuration loader (reads from .env files)
+│   ├── record.py                # Audio recording module
+│   ├── transcribe_client.py     # API client for transcription service
+│   ├── transcribe.py            # Transcribe audio to text (used by AHK)
+│   └── whisper_service.py       # Whisper API service (runs in Docker)
 ├── utils/                       # Utility scripts
 │   ├── check_recordings.py      # Debug recording files
 │   └── view_log.py              # View application logs
@@ -98,18 +116,16 @@ whisper-dictation/
 - Verify Whisper service is running: `docker-compose -f docker/docker-compose.yml --env-file config/service.env ps`
 - Check logs in `%TEMP%\whisper_dictation\`
 
-**Text cut off or not typing:**
-- Increase `TYPING_CHAR_DELAY` in `config/client.env` to `0.05` or higher
-- Run `start.bat` to restart the hotkey script
-
 **Change audio device:**
 ```bash
-uv run python src/recorder.py --list-devices  # List devices
+uv run python src/record.py --list-devices  # List devices
 # Edit config/client.env: Set AUDIO_DEVICE=<device_id>
 start.bat  # Restart the hotkey script
 ```
 
-**Recordings location:** `%TEMP%\whisper_dictation\recording_*.wav`
+**Recordings location:**
+- Default: `%TEMP%\whisper_dictation\recording_*.wav`
+- Can be changed via `TEMP_DIR` in `config/client.env`
 
 ## Advanced
 

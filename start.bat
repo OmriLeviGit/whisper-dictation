@@ -11,4 +11,4 @@ start "" "%~dp0scripts\hold_to_record.ahk"
 echo.
 echo Whisper Dictation hotkey is now active!
 echo Check your system tray for hotkey details.
-timeout /t 2 >\\.\NUL
+timeout /t 1 >\\.\NUL

@@ -1,5 +1,5 @@
 """
-Transcribe Only
+Transcribe
 Transcribes audio and outputs the text to stdout (no typing)
 Used by AHK to get transcription text for window matching logic
 """
@@ -13,7 +13,7 @@ from transcribe_client import transcribe_audio, ServiceUnavailableError, Transcr
 # Configure logging to file only (not to console, to keep stdout clean)
 log_dir = Path.home() / "AppData" / "Local" / "Temp" / "whisper_dictation"
 log_dir.mkdir(parents=True, exist_ok=True)
-log_file = log_dir / "transcribe_only.log"
+log_file = log_dir / "transcribe.log"
 
 logging.basicConfig(
     level=logging.INFO,
@@ -74,7 +74,7 @@ def main(audio_path: str) -> int:
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python transcribe_only.py <audio_file_path>", file=sys.stderr)
+        print("Usage: python transcribe.py <audio_file_path>", file=sys.stderr)
         sys.exit(1)
 
     audio_path = sys.argv[1]

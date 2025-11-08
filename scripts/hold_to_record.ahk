@@ -11,7 +11,7 @@ global isRecording := false
 global recordingProcess := 0
 global outputFile := ""
 global stopFlagFile := ""
-global tempDir := A_Temp "\whisper_dictation"
+global tempDir := ""  ; Will be set from config or default
 global scriptDir := A_ScriptDir
 global projectRoot := scriptDir "\..\"  ; Project root is parent of scripts/
 global srcDir := projectRoot "src"
@@ -25,6 +25,7 @@ global HOTKEY_CONFIG := "Win+F1"  ; Default fallback
 global HOTKEY_BASE_KEY := "F1"     ; Base key for KeyWait (extracted from hotkey)
 global PASTE_HOTKEY_CONFIG := "Win+V"  ; Default paste hotkey
 global PASTE_HOTKEY_BASE := ""
+global TEMP_DIR_CONFIG := ""  ; User-configured temp dir
 
 ; Context capture variables (captured on hotkey release)
 global capturedWindowID := 0
@@ -34,11 +35,6 @@ global capturedCaretEnd := -1
 
 ; Transcription queue (FIFO - First In, First Out)
 global transcriptionQueue := []
-
-; Create temp directory if it doesn't exist
-if !DirExist(tempDir) {
-    DirCreate(tempDir)
-}
 
 ; Debug logging function
 LogDebug(message) {
@@ -50,7 +46,7 @@ LogDebug(message) {
 
 ; Read configuration from client.env file
 LoadConfig() {
-    global clientConfigFile, AUDIO_DEVICE, HOTKEY_CONFIG, PASTE_HOTKEY_CONFIG
+    global clientConfigFile, AUDIO_DEVICE, HOTKEY_CONFIG, PASTE_HOTKEY_CONFIG, TEMP_DIR_CONFIG
 
     LogDebug("Loading config from: " clientConfigFile)
 
@@ -94,6 +90,9 @@ LoadConfig() {
                 } else if (key = "PASTE_HOTKEY") {
                     PASTE_HOTKEY_CONFIG := value
                     LogDebug("Loaded PASTE_HOTKEY: " value)
+                } else if (key = "TEMP_DIR") {
+                    TEMP_DIR_CONFIG := value
+                    LogDebug("Loaded TEMP_DIR: " value)
                 }
             }
         }
@@ -137,12 +136,26 @@ ConvertHotkeyFormat(userFormat) {
 
 ; Log startup
 LogDebug("Script started!")
-LogDebug("Temp dir: " tempDir)
 LogDebug("Script dir: " scriptDir)
 LogDebug("Python CMD: " PYTHON_CMD)
 
 ; Load configuration
 LoadConfig()
+
+; Set temp directory from config or use default
+if (TEMP_DIR_CONFIG != "") {
+    tempDir := TEMP_DIR_CONFIG
+    LogDebug("Using configured temp dir: " tempDir)
+} else {
+    tempDir := A_Temp "\whisper_dictation"
+    LogDebug("Using default temp dir: " tempDir)
+}
+
+; Create temp directory if it doesn't exist
+if !DirExist(tempDir) {
+    DirCreate(tempDir)
+    LogDebug("Created temp directory: " tempDir)
+}
 
 ; Clean up any stale stop flag files from previous sessions
 CleanupStaleFlags() {
@@ -311,7 +324,7 @@ HandleRecordingHotkey() {
         SoundBeep(600, 100)  ; Beep to indicate start
 
         ; Build Python command
-        recorderScript := srcDir "\recorder.py"
+        recorderScript := srcDir "\record.py"
         pythonCmd := PYTHON_CMD ' "' recorderScript '" "' outputFile '"'
 
         ; Add device parameter if specified
@@ -424,8 +437,8 @@ StopRecording() {
         ; Show transcription progress tooltip
         ToolTip("Transcribing...", , , 1)
 
-        ; Build command to transcribe only (get text without typing)
-        transcribeScript := srcDir "\transcribe_only.py"
+        ; Build command to transcribe (get text without typing)
+        transcribeScript := srcDir "\transcribe.py"
         transcribeCmd := PYTHON_CMD ' "' transcribeScript '" "' outputFile '"'
         LogDebug("Transcribe command: " transcribeCmd)
 
