@@ -2,23 +2,13 @@
 
 GPU-accelerated speech-to-text dictation for Windows using OpenAI Whisper. Hold a hotkey to record, release to transcribe and auto-type the result. All processing happens locally.
 
-**How it works:** Hold the hotkey (default: Win+F1) while speaking, release when done - text appears at cursor
-
 ## Features
 
-### Context-Aware Typing
-When you release the recording hotkey, the system captures which window and cursor position you were in. When transcription completes:
-- **Same window:** Types the transcription directly at the cursor position (with best-effort caret restoration for simple apps like Notepad)
-- **Different window:** Adds the transcription to a queue instead of typing it
+- Hold **Win+F1** (configurable) while speaking, release when done
+- If you stay in the same window: auto-types at the position where you released the hotkey (falls back to current cursor if restoration fails)
+- Every transcription is saved to a buffer. Use **Win+V** for pasting
 
-### Transcription Queue (Win+V)
-If you switch windows while your transcription is processing, the text goes into a queue rather than being lost. Use **Win+V** to paste from the queue:
-- **FIFO queue:** First transcription in, first one pasted out
-- **Reusable last item:** The last item in the queue stays available (like the clipboard) - you can paste it multiple times
-- **Unlimited size:** Queue never gets full, all failed/queued transcriptions are preserved
-- **Invisible operation:** Empty queue does nothing silently, no error messages
-
-> **Note:** Win+V overrides Windows' default clipboard history hotkey. You can change this in `config/client.env`.
+> **Note:** Win+V overrides Windows' default clipboard history hotkey. Can be changed `config/client.env`.
 
 ## Requirements
 
@@ -59,7 +49,7 @@ The defaults work well for most users. Edit files in `config/` directory as need
 **`config/client.env`** - Hotkey and client behavior:
 ```env
 HOTKEY=Win+F1                    # Examples: Alt+R, Ctrl+Shift+Space, Win+Shift+F1
-PASTE_HOTKEY=Win+V               # Paste from transcription queue (overrides Windows clipboard history)
+PASTE_HOTKEY=Win+V               # Paste last transcription (overrides Windows clipboard history)
 AUDIO_DEVICE=                    # Empty = default mic (see Troubleshooting to list devices)
 AUDIO_SAMPLE_RATE=16000          # Recommended for Whisper models
 WHISPER_TIMEOUT=300              # Timeout for transcription requests (seconds)
@@ -135,9 +125,8 @@ If you don't have an NVIDIA GPU:
 2. Remove the GPU sections from `docker/docker-compose.yml` (the `deploy:` block)
 3. Run `setup.bat` to rebuild with CPU support
 
-## Credits
+## Tools used
 
 - **OpenAI Whisper** - Speech recognition model
 - **faster-whisper** - Optimized Whisper implementation
 - **AutoHotkey** - Windows automation
-- **FastAPI** - REST API framework

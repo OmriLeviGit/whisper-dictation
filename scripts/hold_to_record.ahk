@@ -33,8 +33,8 @@ global capturedControl := ""
 global capturedCaretStart := -1
 global capturedCaretEnd := -1
 
-; Transcription queue (FIFO - First In, First Out)
-global transcriptionQueue := []
+; Last transcription (saved for pasting with Win+V)
+global lastTranscription := ""
 
 ; Debug logging function
 LogDebug(message) {
@@ -174,49 +174,6 @@ CleanupStaleFlags() {
 ; Run cleanup on startup
 CleanupStaleFlags()
 
-; ==================== QUEUE MANAGEMENT ====================
-
-; Add transcription to queue
-QueueAdd(text) {
-    global transcriptionQueue
-    transcriptionQueue.Push(text)
-    LogDebug("Queue: Added item. Queue size: " transcriptionQueue.Length " | Text: '" text "'")
-}
-
-; Pop item from queue (with last-item reusable behavior)
-QueuePop() {
-    global transcriptionQueue
-
-    if (transcriptionQueue.Length = 0) {
-        LogDebug("Queue: Empty, nothing to pop")
-        return ""
-    }
-
-    ; If this is the last item, keep it (reusable)
-    if (transcriptionQueue.Length = 1) {
-        text := transcriptionQueue[1]
-        LogDebug("Queue: Returning last item (keeping in queue): '" text "'")
-        return text
-    }
-
-    ; Remove and return first item
-    text := transcriptionQueue.RemoveAt(1)
-    LogDebug("Queue: Popped item. Queue size: " transcriptionQueue.Length " | Text: '" text "'")
-    return text
-}
-
-; Check if queue is empty
-QueueIsEmpty() {
-    global transcriptionQueue
-    return (transcriptionQueue.Length = 0)
-}
-
-; Get queue size (for logging)
-QueueSize() {
-    global transcriptionQueue
-    return transcriptionQueue.Length
-}
-
 ; ==================== CARET POSITION FUNCTIONS ====================
 
 ; Try to capture caret position for simple Edit controls
@@ -284,24 +241,19 @@ TypeText(text) {
 
 ; ==================== HOTKEY HANDLERS ====================
 
-; Handler for paste from queue hotkey (Win+V)
+; Handler for paste hotkey (Win+V)
 HandlePasteHotkey() {
-    global transcriptionQueue
+    global lastTranscription
 
     LogDebug("Paste hotkey pressed")
 
-    if (QueueIsEmpty()) {
-        LogDebug("Paste: Queue is empty, doing nothing")
+    if (lastTranscription = "") {
+        LogDebug("Paste: No transcription saved, doing nothing")
         return
     }
 
-    ; Get text from queue (last item stays for reuse)
-    text := QueuePop()
-
-    if (text != "") {
-        LogDebug("Paste: Typing from queue: '" text "'")
-        TypeText(text)
-    }
+    LogDebug("Paste: Typing last transcription: '" lastTranscription "'")
+    TypeText(lastTranscription)
 }
 
 ; Handler for hold-to-record hotkey
@@ -356,10 +308,13 @@ HandleRecordingHotkey() {
 
 StopRecording() {
     global isRecording, recordingProcess, outputFile, stopFlagFile, scriptDir, PYTHON_CMD
-    global capturedWindowID, capturedControl, capturedCaretStart, capturedCaretEnd
+    global capturedWindowID, capturedControl, capturedCaretStart, capturedCaretEnd, lastTranscription
 
     if (isRecording) {
         LogDebug("Stopping recording, PID: " recordingProcess)
+
+        ; Play a sound immediately to indicate release detected
+        SoundBeep(800, 100)
 
         ; ===== CAPTURE CONTEXT ON RELEASE =====
         capturedWindowID := WinGetID("A")
@@ -406,16 +361,18 @@ StopRecording() {
             return
         }
 
-        ; Give Python time to detect the flag (it checks every 200ms)
-        ; Python will clean up the flag file itself
+        ; Give Python time to detect the flag and write the file (2 tries of 250ms)
+        ; Python checks every 200ms
         LogDebug("Waiting for Python to detect stop flag...")
-        Sleep(500)  ; Wait 500ms for Python to see the flag
+        Sleep(250)  ; First wait
+
+        if (!FileExist(outputFile)) {
+            LogDebug("File not ready, waiting another 250ms...")
+            Sleep(250)  ; Second try
+        }
 
         isRecording := false
         LogDebug("Recording stopped, file should be at: " outputFile)
-
-        ; Play a sound to indicate recording stopped
-        SoundBeep(800, 100)
 
         ; Wait for file to be written (check for existence with timeout)
         maxWaitMs := 3000
@@ -470,14 +427,19 @@ StopRecording() {
                     return
                 }
 
+                ; ===== SAVE TRANSCRIPTION =====
+                ; Always save to lastTranscription (available via Win+V)
+                lastTranscription := transcribedText
+                LogDebug("Saved transcription to lastTranscription: '" transcribedText "'")
+
                 ; ===== WINDOW MATCHING LOGIC =====
                 currentWindowID := WinGetID("A")
                 currentWindowTitle := WinGetTitle("A")
                 LogDebug("Window check: Current=" currentWindowID " (" currentWindowTitle "), Captured=" capturedWindowID)
 
                 if (currentWindowID = capturedWindowID) {
-                    ; Same window - type directly with caret restoration
-                    LogDebug("Window MATCH - typing directly")
+                    ; Same window - also type directly with caret restoration
+                    LogDebug("Window MATCH - typing directly (transcription already saved)")
 
                     ; Try to restore control focus (best effort)
                     if (capturedControl != "") {
@@ -505,9 +467,8 @@ StopRecording() {
                     TypeText(transcribedText)
 
                 } else {
-                    ; Different window - add to queue
-                    LogDebug("Window MISMATCH - adding to queue")
-                    QueueAdd(transcribedText)
+                    ; Different window - transcription already saved for later pasting
+                    LogDebug("Window MISMATCH - transcription saved for Win+V pasting")
                 }
 
             } else {
@@ -557,4 +518,4 @@ try {
 }
 
 ; Show startup message
-TrayTip("Hold-to-Record Ready", "Press and hold " HOTKEY_CONFIG " to record audio`nPress " PASTE_HOTKEY_CONFIG " to paste from queue")
+TrayTip("Hold-to-Record Ready", "Press and hold " HOTKEY_CONFIG " to record audio`nPress " PASTE_HOTKEY_CONFIG " to paste last transcription")
