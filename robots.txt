@@ -1,6 +1,0 @@
-# robots.txt for Whisper Dictation
-# This is a local application, not a website
-# This file is here for completeness
-
-User-agent: *
-Disallow: /

@@ -2,13 +2,18 @@
 
 GPU-accelerated speech-to-text dictation for Windows using OpenAI Whisper. Hold a hotkey to record, release to transcribe and auto-type the result. All processing happens locally.
 
-## Features
+## How to Use
 
-- Hold **Win+F1** (configurable) while speaking, release when done
-- If you stay in the same window: auto-types at the position where you released the hotkey (falls back to current cursor if restoration fails)
-- Every transcription is saved to a buffer. Use **Win+V** for pasting
+Once installed, dictation is simple:
 
-> **Note:** Win+V overrides Windows' default clipboard history hotkey. Can be changed `config/client.env`.
+- **Hold Win+F1** while speaking, release when done
+- Text auto-typing behavior:
+  - If you stay in the same window: auto-types at the position where you released the hotkey
+  - Falls back to current cursor position if restoration fails
+  - If you switched windows: won't auto-type, but the transcription is saved to the pasting buffer (accessible via **Win+V**)
+- **Press Win+V** to paste the last transcription again
+
+> **Note:** Both hotkeys are configurable in `config/client.env`. Win+F1 overrides Windows Help, and Win+V overrides Windows' clipboard history.
 
 ## Requirements
 
@@ -32,35 +37,26 @@ GPU-accelerated speech-to-text dictation for Windows using OpenAI Whisper. Hold 
    ```
    This installs the package in editable mode and creates CLI commands.
 
-## Quick Start
-
-1. **First-time setup**:
+3. **Run setup**:
    ```bash
    whisper-setup
    ```
-   Installs dependencies, builds the Docker image, and starts the Whisper service.
+   Installs dependencies, builds the Docker image, starts the Whisper service, and launches the dictation hotkey.
 
-2. **Daily use**:
-   ```bash
-   whisper-start
-   ```
-   Launches the dictation hotkey. Run this whenever you want to use dictation. Whisper should auto-start on system reboot with docker.
-
-3. **Test it**: Hold **Win+F1**, speak, then release
-
-4. **Stop services** (optional):
-   ```bash
-   whisper-stop
-   ```
-   Stops both the AutoHotkey script and Docker service.
+4. **Test it**: Hold **Win+F1**, speak, then release
 
 > **Note:** First transcription may take longer as the model loads into memory, with subsequent ones being faster. If still too slow, consider setting a smaller model in `config/service.env`.
 
-### Optional: Auto-start on Windows startup
+### Recommended: Auto-start on Windows startup
 
-1. Create a shortcut that runs: `whisper-start`
-2. Press **Win+R** → `shell:startup` → Enter
-3. Place the shortcut in the startup folder
+1. Navigate to `scripts\`
+2. Right click to create a shortcut of `whisper-run.vbs`
+3. Press **Win+R** → `shell:startup` → Enter
+4. Place the shortcut in the startup folder
+
+This will automatically launch the dictation hotkey silently in the background when Windows starts.
+
+> **Security Note:** Before setting up auto-start, review the code in `scripts\whisper-run.vbs` and the source files to ensure you trust what will run on startup. Never blindly trust scripts from untrusted sources!
 
 ## Configuration
 
@@ -85,7 +81,7 @@ WHISPER_COMPUTE_TYPE=float16     # float16 (GPU) or int8 (CPU)
 ```
 
 **Apply changes:**
-- After editing `client.env`: `whisper-start` (restart the hotkey script)
+- After editing `client.env`: Run `whisper-run` to apply changes
 - After editing `service.env`: Rebuild the Docker container with `whisper-setup`
 
 ## Project Structure
@@ -123,9 +119,10 @@ whisper-dictation/
 After installation, the following commands are available:
 
 - `whisper-setup` - First-time setup (install deps, build Docker, start service)
-- `whisper-start` - Start the dictation hotkey
+- `whisper-run` - Run the dictation hotkey (use this after computer restart)
 - `whisper-stop` - Stop all services (AutoHotkey + Docker)
-- `whisper-service` - Manually run the Whisper service (for development)
+
+> If you set up an auto-start, you don't need to run anything. Otherwise, run `whisper-run` whenever you want to use dictation.
 
 ## Troubleshooting
 
@@ -141,7 +138,7 @@ After installation, the following commands are available:
 ```bash
 uv run python -m whisper_dictation.record --list-devices  # List devices
 # Edit config/client.env: Set AUDIO_DEVICE=<device_id>
-whisper-start  # Restart the hotkey script
+whisper-run  # Run the hotkey script
 ```
 
 **Recordings location:**

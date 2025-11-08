@@ -48,9 +48,8 @@ dev = [
 
 [project.scripts]
 whisper-setup = "whisper_dictation.cli:setup"
-whisper-start = "whisper_dictation.cli:start"
+whisper-run = "whisper_dictation.cli:run"
 whisper-stop = "whisper_dictation.cli:stop"
-whisper-service = "whisper_dictation.cli:service"
 
 [tool.hatchling.build.targets.wheel]
 packages = ["src/whisper_dictation"]

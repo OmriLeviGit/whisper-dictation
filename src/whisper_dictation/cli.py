@@ -50,6 +50,31 @@ def setup():
     print("=" * 40)
     print()
 
+    # Step 0: Stop any existing services for a clean setup
+    print("[0/3] Ensuring clean state...")
+    run_command(
+        ["taskkill", "/F", "/IM", "AutoHotkey64.exe"],
+        check=False,
+        capture_output=True
+    )
+
+    project_root = get_project_root()
+    docker_compose_file = project_root / "docker" / "docker-compose.yml"
+    env_file = project_root / "config" / "service.env"
+
+    run_command(
+        [
+            "docker-compose",
+            "-f", str(docker_compose_file),
+            "--env-file", str(env_file),
+            "down"
+        ],
+        check=False,
+        capture_output=True
+    )
+    print("Done.")
+    print()
+
     # Step 1: Sync Python dependencies
     print("[1/3] Syncing Python dependencies...")
     result = run_command(
@@ -120,17 +145,17 @@ def setup():
     print("   Setup Complete!")
     print("=" * 40)
     print()
-    print("Starting dictation hotkey...")
-    start()
+    print("Running dictation hotkey...")
+    run()
     print()
     print("The Docker container will auto-start on system reboot.")
     print("To customize settings, check config/client.env and config/service.env")
     print()
 
 
-def start():
-    """Start the Whisper Dictation hotkey."""
-    print("Starting Whisper Dictation...")
+def run():
+    """Run the Whisper Dictation hotkey."""
+    print("Running Whisper Dictation...")
 
     project_root = get_project_root()
     ahk_script = project_root / "scripts" / "hold_to_record.ahk"
@@ -191,49 +216,20 @@ def stop():
     print()
 
 
-def service():
-    """Start the Whisper FastAPI service directly (for development)."""
-    print("Starting Whisper service...")
-    print("Press Ctrl+C to stop")
-    print()
-
-    try:
-        # Import and run the service
-        from whisper_dictation import whisper_service
-        # The service will be started by uvicorn when imported
-        # This is mainly for development/debugging
-        print("Service running at http://localhost:8000")
-        print("API docs available at http://localhost:8000/docs")
-
-        # Keep running
-        import uvicorn
-        uvicorn.run(
-            "whisper_dictation.whisper_service:app",
-            host="0.0.0.0",
-            port=8000,
-            reload=True
-        )
-    except KeyboardInterrupt:
-        print("\nService stopped.")
-        sys.exit(0)
-
-
 def main():
     """Main entry point for debugging."""
     import sys
     if len(sys.argv) < 2:
-        print("Usage: python -m whisper_dictation.cli <setup|start|stop|service>")
+        print("Usage: python -m whisper_dictation.cli <setup|run|stop>")
         sys.exit(1)
 
     command = sys.argv[1]
     if command == "setup":
         setup()
-    elif command == "start":
-        start()
+    elif command == "run":
+        run()
     elif command == "stop":
         stop()
-    elif command == "service":
-        service()
     else:
         print(f"Unknown command: {command}")
         sys.exit(1)
