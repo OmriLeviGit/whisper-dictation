@@ -134,28 +134,27 @@ ConvertHotkeyFormat(userFormat) {
     return {ahkFormat: ahkFormat, baseKey: baseKey}
 }
 
-; Log startup
-LogDebug("Script started!")
-LogDebug("Script dir: " scriptDir)
-LogDebug("Python CMD: " PYTHON_CMD)
+; Set default temp directory (before any logging)
+tempDir := A_Temp "\whisper_dictation"
 
 ; Load configuration
 LoadConfig()
 
-; Set temp directory from config or use default
+; Override temp directory if configured
 if (TEMP_DIR_CONFIG != "") {
     tempDir := TEMP_DIR_CONFIG
-    LogDebug("Using configured temp dir: " tempDir)
-} else {
-    tempDir := A_Temp "\whisper_dictation"
-    LogDebug("Using default temp dir: " tempDir)
 }
 
 ; Create temp directory if it doesn't exist
 if !DirExist(tempDir) {
     DirCreate(tempDir)
-    LogDebug("Created temp directory: " tempDir)
 }
+
+; Log startup (now that tempDir is properly set)
+LogDebug("Script started!")
+LogDebug("Script dir: " scriptDir)
+LogDebug("Python CMD: " PYTHON_CMD)
+LogDebug("Using temp dir: " tempDir)
 
 ; Clean up any stale stop flag files from previous sessions
 CleanupStaleFlags() {
